@@ -1,0 +1,16 @@
+<workflow-app name="ArchiveData" xmlns="uri:oozie:workflow:0.4">
+<start to="Archive_data"/>
+<action name="Archive_data">
+    <distcp xmlns="uri:oozie:distcp-action:0.1">
+        <arg>-Dfs.swift.service.pnda.username=${swift_user}</arg>
+        <arg>-Dfs.swift.service.pnda.password=${swift_password}</arg>
+        <arg>-m</arg>
+        <arg>100</arg>
+        <arg>${inputDir}</arg>
+        <arg>${outputDir}</arg>
+    </distcp>
+    <ok to="success"/>
+    <error to="success"/>
+</action>
+<end name="success"/>
+</workflow-app>

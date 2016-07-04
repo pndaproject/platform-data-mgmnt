@@ -1,0 +1,15 @@
+{
+    "cm_host":"1.2.3.4",
+    "cm_user":"admin",
+    "cm_pass":"admin",
+    "spark_streaming_dirs_to_clean":["/user/hdfs/.sparkStaging/","/tmp/logs/hdfs/logs/","/user/spark/applicationHistory/"],
+    "general_dirs_to_clean": "/user/sandwich",
+    "old_dirs_to_clean": [
+        {
+            "name": "/user/sandwich1",
+            "age_seconds": 20
+        }
+    ],
+    "datasets_table": "platform_datasets",
+    "swift_repo": "swift://archive.pnda/"
+}

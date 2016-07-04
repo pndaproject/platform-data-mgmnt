@@ -1,0 +1,40 @@
+<coordinator-app name="data_governance" start=${COORD_START_TIME} 
+      end=${COORD_END_TIME} frequency=${COORD_FREQ} timezone="UTC" 
+      xmlns="uri:oozie:coordinator:0.4">
+   <controls>
+     <timeout>${COORD_TIMEOUT}</timeout>
+     <throttle>${COORD_THROTTLE}</throttle>
+   </controls>
+   <datasets>
+   <include>${appBaseDir}/common_datasets.xml</include>
+   </datasets>
+   <input-events>
+        <data-in name="kite_slice" dataset="camus_input1">
+          <start-instance>${coord:current(-23)}</start-instance>
+          <end-instance>${coord:current(0)}</end-instance>
+        </data-in>
+      </input-events>
+   <action>
+      <workflow>
+         <app-path>${appBaseDir}/app/</app-path>
+         <configuration>
+         <property>
+            <name>nameNode</name>
+            <value>${nameNode}</value>
+          </property>
+           <property>
+          <name>inputDir</name>
+          <value>${coord:dataIn('kite_slice')}</value> 
+        </property>
+         <property>
+          <name>outputDir</name>
+          <value>${swift_datadir}</value> 
+        </property>
+          <property>
+            <name>jobTracker</name>
+            <value>${jobTracker}</value>
+          </property>
+         </configuration>
+       </workflow>
+   </action>
+</coordinator-app>

@@ -1,0 +1,7 @@
+target/
+*.pyc
+*.pem
+.classpath
+.project
+.settings/
+/data-service/src/main/resources/log

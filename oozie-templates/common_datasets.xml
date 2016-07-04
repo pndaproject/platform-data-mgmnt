@@ -1,0 +1,7 @@
+<dataset name="camus_input1" frequency="${coord:hours(1)}" 
+      initial-instance="2014-12-29T02:00Z">
+  <uri-template> 
+     ${baseDataDir}/${YEAR}-${MONTH}-${DAY}-${HOUR}
+   </uri-template>
+   <done-flag>SUCCESS</done-flag>
+</dataset>

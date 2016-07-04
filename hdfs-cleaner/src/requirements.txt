@@ -1,0 +1,5 @@
+cm-api==11.0.0
+happybase==0.9
+PyHDFS==0.1.1
+pylint==1.5.4
+requests=2.9.1
