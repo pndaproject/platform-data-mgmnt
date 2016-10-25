@@ -141,8 +141,14 @@ class HDBDataStore(object):
         try:
             for root, dirs, _ in self.client.walk(repo_path, topdown=True, onerror=onerror):
                 for entry in dirs:
-                    if "source=" in entry:
-                        item = {DATASET.ID: re.sub('source=', '', entry),
+                    m_source = re.match('^source=(?P<source>.*)', entry)
+                    if m_source is None:
+                        continue
+                    elif m_source.group('source') == '':
+                        logging.warn('An empty source is present, this is not allowed. Something was wrong during ingestion')
+                        continue
+                    else:
+                        item = {DATASET.ID: m_source.group('source'),
                                 DATASET.POLICY: POLICY.SIZE,
                                 DATASET.PATH: os.path.join(root, entry), DATASET.MODE: 'keep'}
                         hdfs_dataset.append(item)
