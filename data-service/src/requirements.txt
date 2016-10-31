@@ -12,3 +12,6 @@ tornado==4.3
 Tornado-JSON==1.2.2
 wrapt==1.10.6
 futures==3.0.5
+boto==2.40.0
+python-swiftclient==3.0.0
+python-keystoneclient==2.3.1

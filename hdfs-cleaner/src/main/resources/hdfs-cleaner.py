@@ -22,12 +22,15 @@ import posixpath as path
 import re
 import subprocess
 import time
+import traceback
 from functools import partial
 from functools import wraps
 
 import happybase
 import requests
+import swiftclient
 from pyhdfs import HdfsClient, HdfsException, HdfsFileNotFoundException
+import boto.s3
 
 from endpoint import CLOUDERA
 from endpoint import Platform
@@ -358,6 +361,29 @@ def main():
     # setup endpoints
     hdfs = HdfsClient(endpoints["HDFS"].geturl(), user_name='hdfs')
     hbase = endpoints["HBASE"].geturl()
+
+    # Create s3 or swift bucket for archive purposes
+    try:
+        if properties['s3_region'] != '':
+            container_type = 's3'
+            s3conn = boto.s3.connect_to_region(properties['s3_region'],
+                                               aws_access_key_id=properties['s3_access_key'],
+                                               aws_secret_access_key=properties['s3_secret_access_key'])
+            s3conn.create_bucket(properties['container_name'], location=properties['s3_region'])
+        else:
+            container_type = 'swift'
+            swift_conn = swiftclient.client.Connection(auth_version='2',
+                                                       user=properties['swift_user'],
+                                                       key=properties['swift_key'],
+                                                       tenant_name=properties['swift_account'],
+                                                       authurl=properties['swift_auth_url'],
+                                                       timeout=30)
+            swift_conn.put_container(properties['container_name'])
+            swift_conn.close()
+    except Exception as ex:
+        # the create container operations are idempotent so would only expect genuine errors here
+        logging.error("Failed to create %s container %s", container_type, properties['container_name'])
+        logging.error(traceback.format_exc(ex))
 
     # create partial functions
     delete_cmd = partial(delete, hdfs)
