@@ -20,7 +20,7 @@ from unittest import TestCase
 import mock as mock
 from mock import Mock
 from mock import MagicMock
-from dataservice import HDBDataStore
+from ..dataservice import HDBDataStore
 
 
 def get_repo_samples1():
@@ -36,9 +36,9 @@ def get_repo_samples1():
 
 def get_repo_samples2(error):
     if error is True:
-        item1 = {"id": 'sample1', 'policy': 'Integrity error', 'path': 'repo', 'retention': '222'}
-        item2 = {"id": 'sample2', 'policy': 'Integrity error', 'path': 'repo', 'retention': '222'}
-        item3 = {"id": 'sample3', 'policy': 'Integrity error', 'path': 'repo', 'retention': '222'}
+        item1 = {"id": 'sample1', 'policy': 'integrity_error', 'path': 'repo', 'retention': '222'}
+        item2 = {"id": 'sample2', 'policy': 'integrity_error', 'path': 'repo', 'retention': '222'}
+        item3 = {"id": 'sample3', 'policy': 'integrity_error', 'path': 'repo', 'retention': '222'}
     else:
         item1 = {"id": 'sample1', 'policy': 'age', 'path': 'repo', 'retention': '222'}
         item2 = {"id": 'sample2', 'policy': 'age', 'path': 'repo', 'retention': '222'}
@@ -104,7 +104,7 @@ class TestHDB(TestCase):
         datasets = db1.read_datasets()
         for i in datasets:
             if i['id'] == 'test5':
-                self.assertEqual(i['policy'], 'Integrity error')
+                self.assertEqual(i['policy'], 'integrity_error')
             elif i['id'] == 'test3':
                 self.assertEqual(i['policy'], 'keep')
 
@@ -162,4 +162,3 @@ class TestHDB(TestCase):
         db1.write_dataset(sample_data)
         table.put.assert_called_once_with('test', {'cf:mode': 'archive', 'cf:policy': 'age',
                                                    'cf:path': 'repo', 'cf:retention': '222'})
-
