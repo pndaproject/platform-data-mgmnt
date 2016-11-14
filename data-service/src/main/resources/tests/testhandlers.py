@@ -49,8 +49,7 @@ class TestServer(AsyncHTTPTestCase):
             hbase_thrift_port=9095,
             hdfs_host='192.168.33.10'
         )
-        self.db = TestDB()
-        return Application(routes=routes, settings=settings, db_conn=self.db)
+        return Application(routes=routes, settings=settings, db_conn=TestDB())
 
     def tearDown(self):
         super(TestServer, self).tearDown()
@@ -74,12 +73,12 @@ class UpdateHandler(TestServer):
         print result.body
         self.assertEqual(result.code, 500)
 
-    def test_put_dataset_for_create(self):
+    def test_put_create(self):
         request_data = dict(mode='delete')
-        result = self.fetch("/api/v1/datasets/redbull", method="PUT",body=json.dumps(request_data),
+        result = self.fetch("/api/v1/datasets/redbull", method="PUT", body=json.dumps(request_data),
                             headers=HTTPHeaders({"content-type": "application/json"}))
         self.assertEqual(result.code, 400)
-        request_data = dict(id= 'test', policy='age', path='/test', mode = 'archive')
+        request_data = dict(id='test', policy='age', path='/test', mode='archive')
         result = self.fetch("/api/v1/datasets/redbull", method="PUT", body=json.dumps(request_data),
                             headers=HTTPHeaders({"content-type": "application/json"}))
         self.assertEqual(result.code, 400)
@@ -92,33 +91,32 @@ class UpdateHandler(TestServer):
                             headers=HTTPHeaders({"content-type": "application/json"}))
         self.assertEqual(result.code, 200)
 
-    def test_put_dataset_for_invalid_age(self):
+    def test_put_invalid_age(self):
         data = dict(policy="age", retention="2000")
         print json.dumps(data)
         result = self.fetch("/api/v1/datasets/test3", method="PUT", body=json.dumps(data),
                             headers=HTTPHeaders({"content-type": "application/json"}))
         self.assertEqual(result.code, 400)
 
-    def test_put_dataset_for_valid_age(self):
+    def test_put_valid_age(self):
         data = dict(policy="age", max_age_days=20)
         result = self.fetch("/api/v1/datasets/test3", method="PUT", body=json.dumps(data),
                             headers=HTTPHeaders({"content-type": "application/json"}))
-        # self.assertEqual(self.db.data['cf:retention'], str(data['max_age_days']))
         self.assertEqual(result.code, 200)
 
-    def test_put_dataset_for_invalid_size(self):
+    def test_put_invalid_size(self):
         data = dict(policy="size", max_age_days=20)
         result = self.fetch("/api/v1/datasets/test3", method="PUT", body=json.dumps(data),
                             headers=HTTPHeaders({"content-type": "application/json"}))
         self.assertEqual(result.code, 400)
 
-    def test_put_dataset_for_size(self):
+    def test_put_size(self):
         data = dict(policy="size", max_size_gigabytes=20)
         result = self.fetch("/api/v1/datasets/test3", method="PUT", body=json.dumps(data),
                             headers=HTTPHeaders({"content-type": "application/json"}))
         self.assertEqual(result.code, 200)
 
-    def test_put_dataset_for_mode(self):
+    def test_put_mode(self):
         request_data = dict(mode='archive')
         result = self.fetch("/api/v1/datasets/test3", method="PUT", body=json.dumps(request_data),
                             headers=HTTPHeaders({"content-type": "application/json"}))

@@ -38,7 +38,7 @@ class EnumDict(object):
 
 class DATASET(EnumDict):
     """ Dataset schema constants """
-    ID = 'id'
+    ID = 'id' # pylint: disable=invalid-name
     MODE = 'mode'
     PATH = 'path'
     POLICY = 'policy'
@@ -49,7 +49,7 @@ class DATASET(EnumDict):
 
 class DBSCHEMA(EnumDict):
     """ HBase schema constants """
-    ID = 'id'
+    ID = 'id' # pylint: disable=invalid-name
     PATH = 'cf:path'
     POLICY = 'cf:policy'
     RETENTION = 'cf:retention'

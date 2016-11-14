@@ -27,9 +27,8 @@ from functools import partial
 from functools import wraps
 
 import happybase
-import requests
 import swiftclient
-from pyhdfs import HdfsClient, HdfsException, HdfsFileNotFoundException
+from pyhdfs import HdfsClient, HdfsFileNotFoundException
 import boto.s3
 
 from endpoint import CLOUDERA
@@ -61,10 +60,10 @@ def archive(container_path, hdfs, file_path):
     logging.info("Archive file onto swift container %s", file_path)
     archive_path = container_path
     try:
-        file_date = re.findall("=(\w*)", file_path)
+        file_date = re.findall(r"=(\w*)", file_path)
         if file_date:
             subprocess.call(['hdfs', 'dfs', '-mkdir', container_path + '/' + file_date[0]], stderr=FNULL)
-            archive_path = path.join(container_path, file_date[0],'-'.join(file_date) + '-' + path.basename(file_path))
+            archive_path = path.join(container_path, file_date[0], '-'.join(file_date) + '-' + path.basename(file_path))
         logging.info("swift archive path %s", archive_path)
         subprocess.check_output(['hdfs', 'dfs', '-cp', file_path, archive_path])
         delete(hdfs, file_path)
@@ -106,6 +105,7 @@ def check_threshold():
 
 @check_threshold()
 def extract_age(retention_age, hdfs, name):
+    # pylint: disable=unused-argument
     """
     Extract age of a HDFS file, retention age is passed on as argument to decorator function
     and used by check_threshold
@@ -140,7 +140,7 @@ def error(exception):
 
 
 def clean_empty_dirs(hdfs, root, dirs):
-     for dir_entry in dirs:
+    for dir_entry in dirs:
         abspath = path.join(root, dir_entry)
         if hdfs.get_content_summary(abspath).fileCount < 1:
             # The directory will not be removed if not empty
@@ -164,7 +164,7 @@ def cleanup_on_age(hdfs, cmd, clean_path, age):
 
     for dir_to_clean in dir_list:
         for root, dirs, files in hdfs.walk(dir_to_clean, topdown=False, onerror=error):
-            logging.info("Root:{%s}->Dirs:{%s}->Files:{%s}",root, dirs, files)
+            logging.info("Root:{%s}->Dirs:{%s}->Files:{%s}", root, dirs, files)
             for filename in files:
                 abspath = path.join(root, filename)
                 if extract_age(age, hdfs, abspath):
@@ -194,7 +194,7 @@ def cleanup_on_size(hdfs, cmd, clean_path, size_threshold):
                          clean_dir, space_consumed, size_threshold)
             if space_consumed > size_threshold:
                 for root, dirs, files in hdfs.walk(clean_dir, topdown=False,
-                                                          onerror=error):
+                                                   onerror=error):
                     logging.info("Root:{%s}->Dirs:{%s}->Files:{%s}", root, dirs, files)
                     for item in files:
                         abspath = path.join(root, item)
@@ -286,33 +286,6 @@ def read_datasets_from_hbase(table_name, hbase_host):
     except Exception as exception:
         logging.warn("Exception thrown for datasets walk on HBASE->'{%s}'", exception.message)
     return datasets
-
-
-# Comment unused function. In future we may need interaction with Dataservice 
-#def read_datasets_from_service(host):
-#     """
-#     Read list of datasets from micro service
-#     :param host:
-#     :return:
-#     """
-#     request_url = "http://%s:7000" % host + "/api/v1/datasets"
-#     response = requests.get(request_url)
-#     if response.status_code == 200:
-#         logging.info("Datasets from micro service:{%s}", response.json())
-#         result = response.json()
-#         data = result['data']
-#         datasets = list()
-#         for entry in data:
-#             if entry['policy'] != 'nolimit':
-#                 if 'max_size_gigabytes' in entry:
-#                     entry['retention'] = int(entry['max_size_gigabytes']) * 1024 * 1024 * 1024
-#                     datasets.append(entry)
-#                 if 'max_age_days' in entry:
-#                     # from days to seconds
-#                     age_in_secs = int(entry['max_age_days']) * 86400
-#                     entry['retention'] = int(time.time() - age_in_secs)
-#                     datasets.append(entry)
-#         return datasets
 
 
 class JOB(object):
