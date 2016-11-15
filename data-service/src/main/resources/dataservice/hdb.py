@@ -247,5 +247,3 @@ class HDBDataStore(object):
                 table.delete(data['id'])
         except TException as exception:
             logging.warn("Failed to delete dataset in hbase,  error(%s):", exception.message)
-
-

@@ -31,6 +31,7 @@ from endpoint import Platform
 from endpoint import CLOUDERA
 
 
+APISERVER = None
 
 def sig_handler(sig, frame):
     """
@@ -47,7 +48,7 @@ def sig_handler(sig, frame):
 def shutdown():
     """shuts down the server"""
     logging.info('Stopping http server')
-    apiserver.stop()
+    APISERVER.stop()
     io_loop = tornado.ioloop.IOLoop.instance()
     io_loop.stop()
 
@@ -58,7 +59,8 @@ def main():
     Main entry point for my service.
     :return:
     """
-    global apiserver
+    # pylint: disable=global-statement
+    global APISERVER
     config.define_options()
     # Attempt to load config from config file
     try:
@@ -80,13 +82,13 @@ def main():
     routes = get_routes(dataservice)
     logging.info("Service Routes %s", routes)
     settings = dict()
-    apiserver = tornado.httpserver.HTTPServer(
+    APISERVER = tornado.httpserver.HTTPServer(
         Application(routes=routes, settings=settings, db_conn=db_store))
     for port in options.ports:
         try:
             logging.debug("Attempting to bind for dataset dataset on port:%d and address %s",
                           port, options.bind_address)
-            apiserver.listen(port, options.bind_address)
+            APISERVER.listen(port, options.bind_address)
             logging.info("Awesomeness is listening on:%s", port)
             break
         except socket.error:

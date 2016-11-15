@@ -36,6 +36,9 @@ echo -n "Code quality (data-service) : "
 cd ${BASE}/data-service/src/main/resources
 check_pylint
 
+nosetests tests/*.py
+[[ $? -ne 0 ]] && exit -1
+
 echo -n "Code quality (hdfs-cleaner) : "
 cd ${BASE}/hdfs-cleaner/src/main/resources
 check_pylint

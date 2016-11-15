@@ -4,4 +4,6 @@ target/
 .classpath
 .project
 .settings/
+*.versionsBackup
+pnda-build/*
 /data-service/src/main/resources/log
