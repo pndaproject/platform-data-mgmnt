@@ -1,9 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.1.2] 2016-12-12
 ### Fixed
-- platform\_datasets hbase table creation
+- Platform\_datasets hbase table creation
 
 ### Changed
 - Datasets with empty source are ignored
