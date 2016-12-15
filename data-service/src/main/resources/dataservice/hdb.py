@@ -166,12 +166,11 @@ class HDBDataStore(object):
         table_name = self.table_name
         try:
             with self.conn_pool.connection(DB_CONNECTION_TIME_OUT) as connection:
-                if connection.is_table_enabled(table_name):
-                    table = connection.table(table_name)
-                else:
+                if table_name not in connection.tables():
                     logging.info('creating hbase table %s', table_name)
                     connection.create_table(table_name, {'cf': dict()})
-                    table = connection.table(table_name)
+
+                table = connection.table(table_name)
                 for _, data in table.scan(limit=1):
                     logging.debug('%s found', table_name)
         except TException as exception:

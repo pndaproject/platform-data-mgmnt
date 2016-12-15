@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Fixed
+- platform\_datasets hbase table creation
+
 ### Changed
 - Datasets with empty source are ignored
 - Externalized build logic from Jenkins to shell script so it can be reused
@@ -13,4 +16,4 @@ All notable changes to this project will be documented in this file.
 
 ## [0.1.0] 2016-07-01
 ### First version
-- Data management API and daemons 
+- Data management API and daemons
