@@ -20,7 +20,7 @@ from unittest import TestCase
 import mock as mock
 from mock import Mock
 from mock import MagicMock
-from main.resources.dataservice import HDBDataStore
+from ..dataservice import HDBDataStore
 
 
 def get_repo_samples1():
@@ -36,9 +36,9 @@ def get_repo_samples1():
 
 def get_repo_samples2(error):
     if error is True:
-        item1 = {"id": 'sample1', 'policy': 'Integrity error', 'path': 'repo', 'retention': '222'}
-        item2 = {"id": 'sample2', 'policy': 'Integrity error', 'path': 'repo', 'retention': '222'}
-        item3 = {"id": 'sample3', 'policy': 'Integrity error', 'path': 'repo', 'retention': '222'}
+        item1 = {"id": 'sample1', 'policy': 'integrity_error', 'path': 'repo', 'retention': '222'}
+        item2 = {"id": 'sample2', 'policy': 'integrity_error', 'path': 'repo', 'retention': '222'}
+        item3 = {"id": 'sample3', 'policy': 'integrity_error', 'path': 'repo', 'retention': '222'}
     else:
         item1 = {"id": 'sample1', 'policy': 'age', 'path': 'repo', 'retention': '222'}
         item2 = {"id": 'sample2', 'policy': 'age', 'path': 'repo', 'retention': '222'}
@@ -62,7 +62,7 @@ def get_repo_sample3():
 
 
 class TestHDB(TestCase):
-    def get_HDB(self):
+    def get_hdb(self):
         hbase_host = '192.168.33.10'
         hbase_thrift_port = 9095
         db1 = HDBDataStore(hbase_host, hbase_host, hbase_thrift_port, "platform_datasets",
@@ -70,51 +70,57 @@ class TestHDB(TestCase):
         return db1
 
     @mock.patch('happybase.ConnectionPool')
-    def testSingleton(self, mock):
-        db1 = self.get_HDB()
-        db2 = self.get_HDB()
+    def test_singleton(self, hbase):
+        # pylint: disable=unused-argument
+        db1 = self.get_hdb()
+        db2 = self.get_hdb()
         self.assertEquals(db1, db2)
 
     @mock.patch('happybase.ConnectionPool')
-    def testCollectCallback_for_same_values(self, mock):
-        db1 = self.get_HDB()
+    def test_collect_same_values(self, hbase):
+        # pylint: disable=unused-argument
+        db1 = self.get_hdb()
         db1.read_data_from_repo = Mock(return_value=get_repo_samples1())
         db1.retrieve_datasets_from_hbase = Mock(return_value=get_repo_samples1())
         db1.collect()
         self.assertEqual(db1.read_datasets(), get_repo_samples1())
 
     @mock.patch('happybase.ConnectionPool')
-    def testCollectCallback_for_no_intersection(self, mock):
-        db1 = self.get_HDB()
+    def test_collect_no_intersection(self, hbase):
+        # pylint: disable=unused-argument
+        db1 = self.get_hdb()
         db1.read_data_from_repo = Mock(return_value=get_repo_samples1())
         db1.retrieve_datasets_from_hbase = Mock(return_value=get_repo_samples2(False))
         db1.collect()
         self.assertEqual(db1.read_datasets(), get_repo_samples2(True) + get_repo_samples1())
 
     @mock.patch('happybase.ConnectionPool')
-    def testCollectCallback_for_intersection(self, mock):
-        db1 = self.get_HDB()
+    def test_collect_intersection(self, hbase):
+        # pylint: disable=unused-argument
+        db1 = self.get_hdb()
         db1.read_data_from_repo = Mock(return_value=get_repo_samples1())
         db1.retrieve_datasets_from_hbase = Mock(return_value=get_repo_sample3())
         db1.collect()
         datasets = db1.read_datasets()
         for i in datasets:
             if i['id'] == 'test5':
-                self.assertEqual(i['policy'], 'Integrity error')
+                self.assertEqual(i['policy'], 'integrity_error')
             elif i['id'] == 'test3':
                 self.assertEqual(i['policy'], 'keep')
 
     @mock.patch('happybase.ConnectionPool')
-    def testCollectCallback_for_emptylist_from_repo(self, mock):
-        db1 = self.get_HDB()
+    def test_callback_emptylist_repo(self, hbase):
+        # pylint: disable=unused-argument
+        db1 = self.get_hdb()
         db1.read_data_from_repo = Mock(return_value=list())
         db1.retrieve_datasets_from_hbase = Mock(return_value=get_repo_samples2(False))
         db1.collect()
         self.assertEqual(db1.read_datasets(), get_repo_samples2(error=True) + list())
 
     @mock.patch('happybase.ConnectionPool')
-    def testCollectCallback_for_emptylist_from_HBase(self, mock):
-        db1 = self.get_HDB()
+    def test_callback_emptylist_hbase(self, hbase):
+        # pylint: disable=unused-argument
+        db1 = self.get_hdb()
         db1.read_data_from_repo = Mock(return_value=get_repo_samples1())
         db1.retrieve_datasets_from_hbase = Mock(return_value=list())
         db1.collect()
@@ -123,8 +129,9 @@ class TestHDB(TestCase):
     @mock.patch('happybase.ConnectionPool')
     @mock.patch('subprocess.Popen')
     # Incomplete
-    def test_read_from_repo(self, pOpen, pool):
-        db1 = self.get_HDB()
+    def test_read_from_repo(self, hbase, p_open):
+        # pylint: disable=unused-argument
+        db1 = self.get_hdb()
 
         def values():
             items = ["api:hdfs://192.168.33.10/user/pnda/default/sandwich2",
@@ -134,17 +141,17 @@ class TestHDB(TestCase):
         process_mock = Mock()
         attrs = {'communicate.return_value': (''.join(values()), 'error')}
         process_mock.configure_mock(**attrs)
-        pOpen.return_value = process_mock
+        p_open.return_value = process_mock
         db1.read_data_from_repo()
         # self.assertTrue(process_mock.called)
 
-    def testwriteDataset(self):
+    def test_write_dataset(self):
         hbase_host = '192.168.33.10'
         hbase_thrift_port = 9095
         table = MagicMock()
         connection = MagicMock()
         enter = MagicMock()
-        enter.table.return_value= table
+        enter.table.return_value = table
         connection.__enter__.return_value = enter
         db1 = HDBDataStore(hbase_host, hbase_host, hbase_thrift_port, "platform_datasets",
                            "repo:hdfs://192.168.33.10:/user/pnda/")
@@ -154,5 +161,4 @@ class TestHDB(TestCase):
                        'mode':"archive"}
         db1.write_dataset(sample_data)
         table.put.assert_called_once_with('test', {'cf:mode': 'archive', 'cf:policy': 'age',
-                                                    'cf:path': 'repo', 'cf:retention': '222'})
-
+                                                   'cf:path': 'repo', 'cf:retention': '222'})

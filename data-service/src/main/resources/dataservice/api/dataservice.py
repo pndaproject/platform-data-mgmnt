@@ -37,16 +37,16 @@ from ..dbenum import POLICY
 
 API_VERSION = "v1"
 
-mode_enum_list = ["keep", "archive", "delete", DATASET.INTEGRITY_ERROR]
-policy_enum_list = [POLICY.AGE, POLICY.SIZE]
+MODE_ENUM_LIST = ["keep", "archive", "delete", DATASET.INTEGRITY_ERROR]
+POLICY_ENUM_LIST = [POLICY.AGE, POLICY.SIZE]
 
-dataset_schema = {
+DATASET_SCHEMA = {
     "type": "object",
     "properties": {
         "id": {"type": "string"},
         "path": {"type": "string"},
-        "policy": {"enum": policy_enum_list},
-        "mode": {"enum": mode_enum_list},
+        "policy": {"enum": POLICY_ENUM_LIST},
+        "mode": {"enum": MODE_ENUM_LIST},
         "max_age_days": {"type": "number"},
         "max_size_gigabytes": {"type": "number"}
     },
@@ -123,6 +123,7 @@ class ListDatasets(DataHandler):
     )
     @coroutine
     def get(self, *args, **kwargs):
+        # pylint: disable=unused-argument
         try:
             result = yield self.__get_datasets__()
             if result is None:
@@ -149,6 +150,7 @@ class GetPartitions(DataHandler):
     )
     @coroutine
     def get(self, dataset_id, **kwargs):
+        # pylint: disable=unused-argument
         """
         :param dataset_id:dataset identifier
         :return: partitons pertaining to dataset
@@ -212,7 +214,7 @@ class UpdateDatasets(DataHandler):
             retention = self.__update_policy(dataset, request_data)
         # Handle mode change
         if DATASET.MODE in request_data:
-            if request_data[DATASET.MODE] in mode_enum_list:
+            if request_data[DATASET.MODE] in MODE_ENUM_LIST:
                 dataset[DATASET.MODE] = request_data[DATASET.MODE]
             else:
                 raise APIError(400, log_message="Not a valid request with invalid mode")
@@ -220,10 +222,11 @@ class UpdateDatasets(DataHandler):
         raise Return(dataset)
 
     @schema.validate(
-        output_schema=dataset_schema
+        output_schema=DATASET_SCHEMA
     )
     @coroutine
     def get(self, dataset_id, **kwargs):
+        # pylint: disable=unused-argument
         """
         :param dataset_id:
         :return:
@@ -244,10 +247,11 @@ class UpdateDatasets(DataHandler):
             raise APIError(500, log_message="Server Internal error")
 
     @schema.validate(
-        output_schema=dataset_schema
+        output_schema=DATASET_SCHEMA
     )
     @coroutine
     def put(self, dataset_id, **kwargs):
+        # pylint: disable=unused-argument
         """
         Update or Create dataset. In case of creation, dataset is validated against
         input schema
@@ -267,15 +271,15 @@ class UpdateDatasets(DataHandler):
                 item = escape.json_decode(self.request.body)
                 item["id"] = dataset_id
                 try:
-                    jsonschema.validate(item, dataset_schema)
+                    jsonschema.validate(item, DATASET_SCHEMA)
                     retention = self.__update_policy(item, item)
                     self.__persist_dataset(item, retention)
                     raise Return(item)
-                except jsonschema.ValidationError as e:
-                    logging.error("Failed to validate input schema {msg:%s}", e.message)
+                except jsonschema.ValidationError as ex:
+                    logging.error("Failed to validate input schema {msg:%s}", ex.message)
                     raise APIError(400, log_message="Malformed request")
-                except jsonschema.SchemaError as e:
-                    logging.error("Failed to validate input schema {msg:%s}", e.message)
+                except jsonschema.SchemaError as ex:
+                    logging.error("Failed to validate input schema {msg:%s}", ex.message)
                     raise APIError(400, log_message="Malformed request")
         except Return as return_exception:
             raise return_exception

@@ -141,8 +141,14 @@ class HDBDataStore(object):
         try:
             for root, dirs, _ in self.client.walk(repo_path, topdown=True, onerror=onerror):
                 for entry in dirs:
-                    if "source=" in entry:
-                        item = {DATASET.ID: re.sub('source=', '', entry),
+                    m_source = re.match('^source=(?P<source>.*)', entry)
+                    if m_source is None:
+                        continue
+                    elif m_source.group('source') == '':
+                        logging.warn('An empty source is present, this is not allowed. Something was wrong during ingestion')
+                        continue
+                    else:
+                        item = {DATASET.ID: m_source.group('source'),
                                 DATASET.POLICY: POLICY.SIZE,
                                 DATASET.PATH: os.path.join(root, entry), DATASET.MODE: 'keep'}
                         hdfs_dataset.append(item)
@@ -160,12 +166,11 @@ class HDBDataStore(object):
         table_name = self.table_name
         try:
             with self.conn_pool.connection(DB_CONNECTION_TIME_OUT) as connection:
-                if connection.is_table_enabled(table_name):
-                    table = connection.table(table_name)
-                else:
+                if table_name not in connection.tables():
                     logging.info('creating hbase table %s', table_name)
                     connection.create_table(table_name, {'cf': dict()})
-                    table = connection.table(table_name)
+
+                table = connection.table(table_name)
                 for _, data in table.scan(limit=1):
                     logging.debug('%s found', table_name)
         except TException as exception:
@@ -241,5 +246,3 @@ class HDBDataStore(object):
                 table.delete(data['id'])
         except TException as exception:
             logging.warn("Failed to delete dataset in hbase,  error(%s):", exception.message)
-
-
