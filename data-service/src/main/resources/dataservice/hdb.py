@@ -22,7 +22,7 @@ import re
 
 import happybase
 from pyhdfs import HdfsClient, HdfsException
-from thrift.Thrift import TException
+from thriftpy.transport import TException
 
 from .dbenum import DATASET
 from .dbenum import DBSCHEMA
