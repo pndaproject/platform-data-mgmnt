@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] 2017-01-20
+### Changed
+- PNDA-2485: Pinned all python libraries to strict version numbers
+
 ## [0.1.2] 2016-12-12
 ### Fixed
 - Platform\_datasets hbase table creation
