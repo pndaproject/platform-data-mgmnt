@@ -1,4 +1,5 @@
 {
+    "hadoop_distro":"hdp",
     "cm_host":"1.2.3.4",
     "cm_user":"admin",
     "cm_pass":"admin",

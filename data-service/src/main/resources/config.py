@@ -38,6 +38,7 @@ def define_options():
            help="The HDFS location in which all HDFS files are stored",
            type=str)
     define("thrift_port", default=9090, help="The port number of HBASE Thrift gateway", type=int)
+    define("hadoop_distro", default='CDH', help="The hadoop distribution (CDH|HDP)", type=str)
     define("cm_host", default='localhost', help="The cluster manager interface", type=str)
     define("cm_user", default='admin', help="The user name for cluster manager", type=str)
     define("cm_pass", default='admin', help="The password for cluster manager", type=str)

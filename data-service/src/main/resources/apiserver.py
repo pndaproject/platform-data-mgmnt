@@ -28,7 +28,6 @@ import config
 import dataservice
 from dataservice import HDBDataStore
 from endpoint import Platform
-from endpoint import CLOUDERA
 
 
 APISERVER = None
@@ -70,7 +69,7 @@ def main():
                   .format(options.conf_file_path))
         logging.warn(errmsg)
     logging.info(options.as_dict())
-    platform = Platform.factory(CLOUDERA)
+    platform = Platform.factory(options.hadoop_distro)
     endpoints = platform.discover(options)
     if not endpoints:
         logging.error("Failed to discover API endpoints of cluster")

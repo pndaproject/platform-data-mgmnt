@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+### Added:
+- PNDA-2445: Support for Hortonworks HDP
+
 ## [0.2.0] 2017-01-20
 ### Changed
 - PNDA-2485: Pinned all python libraries to strict version numbers
