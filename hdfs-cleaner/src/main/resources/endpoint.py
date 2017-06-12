@@ -13,10 +13,12 @@
    ANY KIND, either express or implied.
    Purpose: Discover API endpoints of a cluster.
 """
+import requests
 
 from cm_api.api_client import ApiResource
 
-CLOUDERA = "Cloudera"
+CLOUDERA = "CDH"
+HORTONWORKS = "HDP"
 
 
 class Endpoint(object):
@@ -69,10 +71,10 @@ class Platform(object):
         """
         if distribution == ("%s" % CLOUDERA):
             return Cloudera()
+        elif distribution == ("%s" % HORTONWORKS):
+            return Hortonworks()
         elif distribution == "Local":
             return Local()
-
-
 
 
 def connect_cm(cm_host, cm_username, cm_password):
@@ -118,6 +120,48 @@ class Cloudera(Platform):
                         break
         return endpoints
 
+class Hortonworks(Platform):
+    """
+    Hortonworks Endpoint object that discovers endpoint of an
+    hadoop cluster depending on the distribution
+    """
+    def _ambari_request(self, ambari, uri):
+        hadoop_manager_ip = ambari[0]
+        hadoop_manager_username = ambari[1]
+        hadoop_manager_password = ambari[2]
+        if uri.startswith("http"):
+            full_uri = uri
+        else:
+            full_uri = 'http://%s:8080/api/v1%s' % (hadoop_manager_ip, uri)
+
+        headers = {'X-Requested-By': hadoop_manager_username}
+        auth = (hadoop_manager_username, hadoop_manager_password)
+        return requests.get(full_uri, auth=auth, headers=headers).json()
+
+    def _component_host(self, component_detail):
+        host_list = ''
+        for host_detail in component_detail['host_components']:
+            if len(host_list) > 0:
+                host_list += ','
+            host_list += host_detail['HostRoles']['host_name']
+        return host_list
+
+    def discover(self, properties):
+        endpoints = {}
+
+        ambari = (properties['cm_host'], properties['cm_user'], properties['cm_pass'])
+        cluster_name = self._ambari_request(ambari, '/clusters')['items'][0]['Clusters']['cluster_name']
+
+        #TODO this should be httpfs - needed for HA and append mode doesn't work with plain webhdfs
+        namenode_components = self._ambari_request(ambari, '/clusters/%s/services/%s/components/%s'
+                                                   % (cluster_name, "HDFS", "NAMENODE"))
+        endpoints['HDFS'] = Endpoint("HDFS", "%s:50070" % self._component_host(namenode_components))
+
+        hbase_components = self._ambari_request(ambari, '/clusters/%s/services/%s/components/%s'
+                                                % (cluster_name, "HBASE", "HBASE_MASTER"))
+        endpoints['HBASE'] = Endpoint("HBASE", self._component_host(hbase_components))
+
+        return endpoints
 
 class Local(Platform):
     """
