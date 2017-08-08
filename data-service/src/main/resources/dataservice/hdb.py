@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
    Copyright (c) 2016 Cisco and/or its affiliates.
    This software is licensed to you under the terms of the Apache License, Version 2.0
@@ -19,10 +21,15 @@ import logging
 import os
 import re
 
+import posixpath as path
+import subprocess
 
+import swiftclient
+import boto.s3
 import happybase
 from pyhdfs import HdfsClient, HdfsException
 from thriftpy.transport import TException
+from boto.s3.key import Key
 
 from .dbenum import DATASET
 from .dbenum import DBSCHEMA
@@ -31,7 +38,7 @@ from .dbenum import POLICY
 DB_CONNECTION_POOL_SIZE = 8
 DB_CONNECTION_TIME_OUT = 5000
 KITE_COMMAND = 'kite-api'
-
+FNULL = open(os.devnull, 'w')
 
 def onerror(msg):
     """
@@ -55,7 +62,6 @@ def tag_for_integrity(data_list):
 def dirwalk(client, dir_path):
     """
     Function to walk hdfs DIRECTORY
-
     """
     for file_entry in client.listdir(dir_path):
         fullpath = os.path.join(dir_path, file_entry)
@@ -85,7 +91,7 @@ class HDBDataStore(object):
     Its not a generic HBase dataset handler.
     """
     __metaclass__ = Singleton
-    def __init__(self, hdfs_host, hbase_host, hbase_port_no, table_name, repo_path):
+    def __init__(self, hdfs_host, hbase_host, hbase_port_no, table_name, repo_path, properties):
         logging.info(
             'Open connection pool for hbase host:%s port:%d', hbase_host, hbase_port_no)
         # create connection pools
@@ -101,6 +107,7 @@ class HDBDataStore(object):
         self.hbase_port_no = hbase_port_no
         self.table_name = table_name
         self.repo_path = repo_path
+	self.properties = properties
         self.master_dataset = list()
         self.client = HdfsClient(hosts=hdfs_host, user_name='hdfs')
 
@@ -195,7 +202,137 @@ class HDBDataStore(object):
         :return:
         """
         return self.master_dataset
-
+		
+    """ 
+     Added by Srithar to list Archive
+    """	 
+    def read_arch(self):
+        """
+        Read data from HDFS arch_path
+        :return:
+        """
+        properties = self.properties
+        arch_path = properties['swift_repo'];
+        hdfs_dataset = list()
+        try:
+			#item = {DATASET.ID: 'archival',
+            #                    DATASET.PATH: '/user/PNDA/datasets/YYYYMMDDHH24'}
+            if properties['s3_archive_region'] != '':
+                container_type = 's3'
+                s3conn = boto.s3.connect_to_region(properties['s3_archive_region'],
+                                               aws_access_key_id=properties['s3_archive_access_key'],
+                                               aws_secret_access_key=properties['s3_archive_secret_access_key'])
+            #s3conn.create_bucket(properties['container_name'], location=properties['s3_archive_region'])
+                s3location = s3conn.get_bucket(properties['container_name'])
+                for i in s3location.get_all_keys():
+                    file_name = re.sub("^[a-zA-Z0-9]*\/","",i.key)
+                    item = {DATASET.ID: arch_path, DATASET.PATH: file_name}
+                    if not file_name.endswith('/'):
+                        hdfs_dataset.append(item)
+            else:
+                container_type = 'swift'
+                swift_conn = swiftclient.client.Connection(auth_version='2',
+                                                       user=properties['swift_user'],
+                                                       key=properties['swift_key'],
+                                                       tenant_name=properties['swift_account'],
+                                                       authurl=properties['swift_auth_url'],
+                                                       timeout=30)
+            #swift_conn.put_container(properties['container_name'])
+            #swift_conn.close()
+                swift_location = swift_conn.get_container(properties['container_name'])
+                for data in swift_location[1]:
+                    file_name = re.sub("^[a-zA-Z0-9]*\/","",data['name'])
+                    item = {DATASET.ID: arch_path, DATASET.PATH: file_name}
+                    if not file_name.endswith('/'):
+                        hdfs_dataset.append(item)
+        except Exception  as exception:
+            #logging.warn("Error in walking HDFS File system %s", exception.message)
+            logging.error("Failed to create %s container %s", container_type, properties['container_name'])
+            logging.error(traceback.format_exc(ex))
+        return hdfs_dataset
+    """ 
+     Added by Srithar to list Archive
+    """	 
+    def restore_datasets(self, request_data):
+        """
+        Read data from HDFS arch_path
+        :return:
+        """
+        properties = self.properties
+        arch_path = properties['swift_repo']
+        repo_path = self.repo_path
+        #hdfs_dataset = list()
+        try:
+			#item = {DATASET.ID: 'archival',
+            #                    DATASET.PATH: '/user/PNDA/datasets/YYYYMMDDHH24'}
+            logging.info("Inside restore Datasets function")
+            if properties['s3_archive_region'] != '':
+                container_type = 's3'
+                s3conn = boto.s3.connect_to_region(properties['s3_archive_region'],
+                                               aws_access_key_id=properties['s3_archive_access_key'],
+                                               aws_secret_access_key=properties['s3_archive_secret_access_key'])
+            #s3conn.create_bucket(properties['container_name'], location=properties['s3_archive_region'])
+                s3location = s3conn.get_bucket(properties['container_name'])
+		logging.info("Inside restore Datasets function request_data is %s", request_data)
+                for item in request_data:
+		    #logging.info("Inside for loop function")
+                    fileName = item[DATASET.PATH]
+                    path_str = path.dirname(fileName)
+                    file_name = path.basename(fileName)
+		    logging.info("Inside for loop function1 %s %s %s", arch_path, fileName, path.basename(arch_path) + '/' + fileName)
+                    #s3location = s3conn.get_bucket(properties['container_name'] + '/' + path_str)
+                    k = Key(s3location,path.basename(arch_path) + '/' + fileName)
+		    logging.info("Inside for loop function2 %s #### %s", properties['container_name'] + '/' + path_str, file_name)
+                    archive_path = arch_path + '/' + fileName
+		    #logging.info("Inside for loop function %s", archive_path)
+		    #logging.info("Inside for loop function3")
+                    dir_array = file_name.split('-')
+		    #logging.info("Inside for loop function4")
+                    path_str = 'source=' + dir_array[0] + '/year=' + dir_array[1] + '/month=' + dir_array[2] + '/day=' + dir_array[3] + '/hour=' + dir_array[4] + '/' + '-'.join(dir_array[5:])
+		    #logging.info("Inside for loop function5")
+                    hdfs_path = repo_path + '/' + path_str
+                    hdfs_dir  = path.dirname(hdfs_path)
+                    logging.info("Going to create dir HDFS path %s", hdfs_dir)
+                    subprocess.call(['hdfs', 'dfs', '-mkdir', hdfs_dir ], stderr=FNULL)
+                    logging.info("swift archive path %s and HDFS path %s", archive_path, hdfs_path)
+                    subprocess.check_output(['hdfs', 'dfs', '-cp', archive_path, hdfs_path])
+					#print (path_str)
+                    #hdfs_path = path.dirname(fileName)
+                    k.delete()
+            else:
+                container_type = 'swift'
+                swift_conn = swiftclient.client.Connection(auth_version='2',
+                                                       user=properties['swift_user'],
+                                                       key=properties['swift_key'],
+                                                       tenant_name=properties['swift_account'],
+                                                       authurl=properties['swift_auth_url'],
+                                                       timeout=30)
+            #swift_conn.put_container(properties['container_name'])
+            #swift_conn.close()
+                #swift_location = swift_conn.get_container(properties['container_name'])
+                for item in request_data:
+                    fileName = item[DATASET.PATH]
+                    archive_path = arch_path + '/' + fileName
+                    path_str = path.dirname(fileName)
+                    file_name = path.basename(fileName)
+                    dir_array = file_name.split('-')
+                    path_str = '/source=' + dir_array[0] + '/year=' + dir_array[1] + '/month=' + dir_array[2] + '/day=' + dir_array[3] + '/hour=' + dir_array[4] + '/' + '-'.join(dir_array[5:])
+                    hdfs_path = repo_path + '/' + path_str
+                    logging.info("swift archive path %s and HDFS path %s", archive_path, hdfs_path)
+                    subprocess.check_output(['hdfs', 'dfs', '-cp', archive_path, hdfs_path])
+					#print (path_str)
+                    #hdfs_path = path.dirname(fileName)
+                    swift_conn.delete_object(properties['container_name'], fileName)
+        except subprocess.CalledProcessError as cpe:
+            logging.error('CPE:failed to restore file with following error{%s}',  cpe.message)
+        except ValueError as value_error:
+            logging.error('VE:failed to restore file with following error{%s}', 
+                      value_error.message)
+        except Exception  as exception:
+            #logging.warn("Error in walking HDFS File system %s", exception.message)
+            logging.error("Failed to restore archival file from %s container %s", container_type, properties['container_name'])
+            logging.error("ERROR::Message::%s", exception.message)
+        return 0
     def read_partitions(self, data_path):
         """
         Read partition for a HDFS dataset
@@ -246,3 +383,4 @@ class HDBDataStore(object):
                 table.delete(data['id'])
         except TException as exception:
             logging.warn("Failed to delete dataset in hbase,  error(%s):", exception.message)
+

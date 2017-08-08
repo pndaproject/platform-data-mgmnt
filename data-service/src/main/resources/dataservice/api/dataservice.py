@@ -2,19 +2,15 @@
      Copyright (c) 2016 Cisco and/or its affiliates.
      This software is licensed to you under the terms of the Apache License,
      Version 2.0 (the "License").
-
      You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
      The code, technical concepts, and all information contained herein, are the property of
      Cisco Technology, Inc.and/or its affiliated entities, under various laws
      including copyright, international treaties, patent, and/or contract.
-
      Any use of the material herein must be in accordance with the terms of the License.
      All rights not expressly granted by the License are reserved.
-
      Unless required by applicable law or agreed to separately in writing,software distributed
      under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
      OF ANY KIND, either express or implied.
-
      Purpose: API Implementation for managing PNDA platform datasets
 """
 
@@ -89,7 +85,18 @@ class DataHandler(APIHandler):
         logging.info("Reading partition information for dataset: %s", path)
         parts = self.db_conn.read_partitions(path)
         raise Return(parts)
-
+		
+    @run_on_executor
+    def __read_arch__(self):
+        hdb_datasets = self.db_conn.read_arch()
+        logging.info("Following datasets were received from table %s", hdb_datasets)
+        raise Return(hdb_datasets)
+	
+    @run_on_executor
+    def __restore_datasets_db(self, request_data):
+        logging.info("Restoring datasets from Archival")
+        result = self.db_conn.restore_datasets(request_data)
+        raise Return(result)
     @run_on_executor
     def __write_data__(self, data):
         self.db_conn.write_dataset(data)
@@ -107,8 +114,18 @@ class DataHandler(APIHandler):
             yield self.__read_parts__(path)
         except Return as value_return:
             raise Return(value_return.value)
-
-
+    @coroutine
+    def __get_arch__(self):
+        try:
+            yield self.__read_arch__()
+        except Return as value_return:
+            raise Return(value_return.value)			
+    @coroutine
+    def __restore_datasets__(self, request_data):
+        try:
+            yield self.__restore_datasets_db(request_data)
+        except Return as value_return:
+            raise Return(value_return.value)
 class ListDatasets(DataHandler):
     """
     List available pnda datasets
@@ -258,34 +275,107 @@ class UpdateDatasets(DataHandler):
         :param dataset_id:Dataset identifier
         :return:
         """
-        try:
-            result = yield self.__get_datasets__()
-            if result is None:
-                raise APIError(500, log_message="Server internal error")
+	str1='/api/' + API_VERSION + '/datasets/retrieve'
+	if self.request.uri == str1:
+		try:
+			logging.info('Dataset restore function called ########### ')
+			request_data = escape.json_decode(self.request.body)
+			result = yield self.__restore_datasets__(request_data)
+		except Return as return_exception:
+			raise return_exception
+		except APIError as api_error:
+			raise api_error
+		except Exception as exception:
+			logging.warn('Dataset restore returned with following error '
+				 'on server->%s', exception.message)
+		raise APIError(500, log_message="Internal Server Error")
+	else:
+		try:
+			result = yield self.__get_datasets__()
+			if result is None:
+				raise APIError(500, log_message="Server internal error")
 
-            dataset_found = [item for item in result if item[DATASET.ID] == dataset_id]
-            if dataset_found:
-                request_data = escape.json_decode(self.request.body)
-                self.__update_dataset(dataset_found[0], request_data)
-            else:
-                item = escape.json_decode(self.request.body)
-                item["id"] = dataset_id
-                try:
-                    jsonschema.validate(item, DATASET_SCHEMA)
-                    retention = self.__update_policy(item, item)
-                    self.__persist_dataset(item, retention)
-                    raise Return(item)
-                except jsonschema.ValidationError as ex:
-                    logging.error("Failed to validate input schema {msg:%s}", ex.message)
-                    raise APIError(400, log_message="Malformed request")
-                except jsonschema.SchemaError as ex:
-                    logging.error("Failed to validate input schema {msg:%s}", ex.message)
-                    raise APIError(400, log_message="Malformed request")
+			dataset_found = [item for item in result if item[DATASET.ID] == dataset_id]
+			if dataset_found:
+				request_data = escape.json_decode(self.request.body)
+				self.__update_dataset(dataset_found[0], request_data)
+			else:
+				item = escape.json_decode(self.request.body)
+				item["id"] = dataset_id
+				try:
+					jsonschema.validate(item, DATASET_SCHEMA)
+					retention = self.__update_policy(item, item)
+					self.__persist_dataset(item, retention)
+					raise Return(item)
+				except jsonschema.ValidationError as ex:
+					logging.error("Failed to validate input schema {msg:%s}", ex.message)
+					raise APIError(400, log_message="Malformed request")
+				except jsonschema.SchemaError as ex:
+					logging.error("Failed to validate input schema {msg:%s}", ex.message)
+					raise APIError(400, log_message="Malformed request")
+		except Return as return_exception:
+			raise return_exception
+		except APIError as api_error:
+			raise api_error
+		except Exception as exception:
+			logging.warn('Dataset updated returned with following error '
+					 'on server->%s', exception.message)
+		raise APIError(500, log_message="Internal Server Error")
+			
+class ListDatasetsArch(DataHandler):
+    """
+    List available pnda datasets archive
+    """
+
+    __urls__ = [r'/api/' + API_VERSION + '/datasets/arch']
+
+    @schema.validate(
+        output_schema={
+            "type": "array",
+        },
+    )
+    @coroutine
+    def get(self, *args, **kwargs):
+        # pylint: disable=unused-argument
+        try:
+            result = yield self.__get_arch__()
+            if result is None:
+                raise APIError(503, log_message="Server internal error")
+            # reformat response depending on policy
+            raise Return(result)
+        except Return as return_value:
+            raise return_value
+        except Exception as exception:
+            logging.warn("Exception thrown in /listarch API %s", exception.message)
+            raise APIError(500, log_message="Server Internal error")
+
+class RestoreDatasets(DataHandler):
+    """
+    Update/Retrieve  fields pertaining to specific api
+    """
+    __urls__ = [r'/api/' + API_VERSION + '/datasets/retrieve']
+
+    @schema.validate(
+        output_schema=DATASET_SCHEMA
+    )
+    @coroutine
+    def put(self, *args, **kwargs):
+        # pylint: disable=unused-argument
+        """
+        Update or Create dataset. In case of creation, dataset is validated against
+        input schema
+        :param dataset_id:Dataset identifier
+        :return:
+        """
+        try:
+            request_data = escape.json_decode(self.request.body)
+            result = yield self.__restore_datasets__(request_data)
         except Return as return_exception:
             raise return_exception
         except APIError as api_error:
             raise api_error
         except Exception as exception:
-            logging.warn('Dataset updated returned with following error '
+            logging.warn('Dataset restore returned with following error '
                          'on server->%s', exception.message)
             raise APIError(500, log_message="Internal Server Error")
+
