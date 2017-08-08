@@ -17,6 +17,7 @@
 import logging
 import signal
 import socket
+import json
 
 import tornado.httpserver
 import tornado.ioloop
@@ -74,11 +75,14 @@ def main():
     endpoints = platform.discover(options)
     if not endpoints:
         logging.error("Failed to discover API endpoints of cluster")
+	
+    with file('/opt/pnda/hdfs-cleaner/properties.json') as property_file:
+        properties = json.load(property_file)
 
     db_store = HDBDataStore(endpoints['HDFS'].geturl(), endpoints['HBASE'].geturl(),
                             options.thrift_port,
                             options.datasets_table,
-                            options.data_repo)
+                            options.data_repo, properties)
     routes = get_routes(dataservice)
     logging.info("Service Routes %s", routes)
     settings = dict()
