@@ -31,7 +31,6 @@ import swiftclient
 from pyhdfs import HdfsClient, HdfsFileNotFoundException
 import boto.s3
 
-from endpoint import CLOUDERA
 from endpoint import Platform
 
 NEG_SIZE = 2
@@ -324,7 +323,7 @@ def main():
     jobs = list()
     with file('properties.json') as property_file:
         properties = json.load(property_file)
-    platform = Platform.factory(CLOUDERA)
+    platform = Platform.factory(properties['hadoop_distro'])
     # discover endpoints
     endpoints = platform.discover(properties)
     assert endpoints
