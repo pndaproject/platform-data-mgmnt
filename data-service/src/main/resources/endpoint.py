@@ -138,12 +138,14 @@ class Hortonworks(Platform):
         auth = (hadoop_manager_username, hadoop_manager_password)
         return requests.get(full_uri, auth=auth, headers=headers).json()
 
-    def _component_host(self, component_detail):
-        host_list = ''
+    def _component_hosts(self, component_detail):
+        host_list = []
         for host_detail in component_detail['host_components']:
-            host_list += host_detail['HostRoles']['host_name']
-            break;
+            host_list.append(host_detail['HostRoles']['host_name'])
         return host_list
+
+    def _component_host(self, component_detail):
+        return self._component_hosts(component_detail)[0]
 
     def discover(self, properties):
         endpoints = {}
@@ -154,7 +156,9 @@ class Hortonworks(Platform):
         #TODO this should be httpfs - needed for HA and append mode doesn't work with plain webhdfs
         namenode_components = self._ambari_request(ambari, '/clusters/%s/services/%s/components/%s'
                                                    % (cluster_name, "HDFS", "NAMENODE"))
-        endpoints['HDFS'] = Endpoint("HDFS", "%s:14000" % self._component_host(namenode_components))
+        hosts = self._component_hosts(namenode_components)
+        namenodes = ','.join([host+':50070' for host in hosts])
+        endpoints['HDFS'] = Endpoint("HDFS", namenodes)
 
         hbase_components = self._ambari_request(ambari, '/clusters/%s/services/%s/components/%s'
                                                 % (cluster_name, "HBASE", "HBASE_MASTER"))
