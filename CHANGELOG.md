@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 ### Added:
 - PNDA-2445: Support for Hortonworks HDP
 
+### Fixed
+- PNDA-3427: Configure data-service with the webhdfs services.
+
 ## [0.2.0] 2017-01-20
 ### Changed
 - PNDA-2485: Pinned all python libraries to strict version numbers
