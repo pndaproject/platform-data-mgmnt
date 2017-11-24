@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+
+## [0.2.1] 2017-11-24
 ### Added:
 - PNDA-2445: Support for Hortonworks HDP
 
