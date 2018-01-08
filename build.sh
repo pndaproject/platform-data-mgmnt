@@ -1,6 +1,7 @@
 #!/bin/bash
 #
 # Please check pnda-build/ for the build products
+set -e
 
 VERSION=${1}
 
@@ -22,9 +23,9 @@ else
 fi
 
 function check_pylint {
-    PYLINTOUT=$(find . -type f -name '*.py' | grep -vi __init__ | xargs pylint)
-    SCORE=$(echo ${PYLINTOUT} | grep -Po '(?<=rated at ).*?(?=/10)')
-    echo ${SCORE}
+    export PYLINTOUT=$(find . -type f -name '*.py' | grep -vi __init__ | xargs pylint)
+    export SCORE=$(echo ${PYLINTOUT} | grep -Po '(?<=rated at ).*?(?=/10)')
+    echo "pylint score: ${SCORE}"
     if [[ $(bc <<< "${SCORE} > 9") == 0 ]]; then
         code_quality_error "${PYLINTOUT}"
     fi
