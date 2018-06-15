@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Added:
+- PNDA-4426: Added a config to control the log level for the dataset service
 
 ## [0.2.2] 2018-02-10
 ### Changed:
