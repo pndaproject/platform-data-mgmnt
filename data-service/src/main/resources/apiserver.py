@@ -17,7 +17,6 @@
 import logging
 import signal
 import socket
-import sys
 
 import tornado.httpserver
 import tornado.ioloop
@@ -30,7 +29,7 @@ import dataservice
 from dataservice import HDBDataStore
 from endpoint import Platform
 
-options.logging = None
+
 APISERVER = None
 
 def sig_handler(sig, frame):
@@ -62,23 +61,14 @@ def main():
     # pylint: disable=global-statement
     global APISERVER
     config.define_options()
-    err_msg = ''
     # Attempt to load config from config file
     try:
         parse_config_file("server.conf")
     except IOError:
-        err_msg = ("{} doesn't exist or couldn't be opened. Using defaults."
-                   .format(options.conf_file_path))
-
-    logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
-                        level=logging.getLevelName(options.log_level),
-                        filename=options.log_file_prefix,
-                        stream=sys.stderr)
-
+        errmsg = ("{} doesn't exist or couldn't be opened. Using defaults."
+                  .format(options.conf_file_path))
+        logging.warn(errmsg)
     logging.info(options.as_dict())
-    if err_msg:
-        logging.error(err_msg)
-
     platform = Platform.factory(options.hadoop_distro)
     endpoints = platform.discover(options)
     if not endpoints:
