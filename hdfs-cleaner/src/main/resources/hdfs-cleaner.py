@@ -61,7 +61,7 @@ def archive(container_path, hdfs, file_path):
     try:
         file_date = re.findall(r"=(\w*)", file_path)
         if file_date:
-            subprocess.call(['hdfs', 'dfs', '-mkdir', container_path + '/' + file_date[0]], stderr=FNULL)
+            subprocess.call(['hdfs', 'dfs', '-mkdir', '-p', container_path + '/' + file_date[0]], stderr=FNULL)
             archive_path = path.join(container_path, file_date[0], '-'.join(file_date) + '-' + path.basename(file_path))
         logging.info("swift archive path %s", archive_path)
         subprocess.check_output(['hdfs', 'dfs', '-cp', file_path, archive_path])
