@@ -196,11 +196,16 @@ def cleanup_on_size(hdfs, cmd, clean_path, size_threshold):
                                                    onerror=error):
                     logging.info("Root:{%s}->Dirs:{%s}->Files:{%s}", root, dirs, files)
                     for item in files:
-                        abspath = path.join(root, item)
-                        space_consumed -= extract_size(hdfs, abspath)
+                        
                         if space_consumed <= size_threshold:
                             break
+
+                        # Read the file-size from HDFS, remove file and update the space_consumed
+                        abspath = path.join(root, item)
+                        file_size = extract_size(hdfs, abspath)
                         cmd(abspath)
+                        space_consumed -= file_size
+
                     clean_empty_dirs(hdfs, root, dirs)
         except HdfsFileNotFoundException as hdfs_file_not_found_exception:
             logging.warn("{%s}", hdfs_file_not_found_exception.message)
