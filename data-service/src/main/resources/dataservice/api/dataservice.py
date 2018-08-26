@@ -21,8 +21,8 @@
 import copy
 import logging
 
-import jsonschema
 from concurrent.futures import ThreadPoolExecutor
+import jsonschema
 from tornado import escape
 from tornado.concurrent import run_on_executor
 from tornado.gen import Return
@@ -236,7 +236,7 @@ class UpdateDatasets(DataHandler):
             if result is None:
                 raise APIError(500, log_message="Server internal error")
             dataset_found = [i for i in result if i['id'] == dataset_id]
-            if len(dataset_found) == 0:
+            if not dataset_found:
                 raise APIError(404, log_message="Dataset by that name not found.")
             logging.info("dataset found %s", dataset_found)
             raise Return(dataset_found.pop())
