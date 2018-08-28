@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 ### Added:
 - PNDA-4426: Added a config to control the log level for the dataset service
+### Fixed:
+- PNDA-4879 added command to create sub directories in s3 or swift
 
 ## [0.2.2] 2018-02-10
 ### Changed:
