@@ -346,7 +346,12 @@ def main():
             s3conn = boto.s3.connect_to_region(properties['s3_archive_region'],
                                                aws_access_key_id=properties['s3_archive_access_key'],
                                                aws_secret_access_key=properties['s3_archive_secret_access_key'])
-            s3conn.create_bucket(properties['container_name'], location=properties['s3_archive_region'])
+            if properties['s3_archive_region'] == "us-east-1":
+                # use "US Standard" region. workaround for https://github.com/boto/boto3/issues/125
+                s3conn.create_bucket(properties['container_name'])
+            else:
+                s3conn.create_bucket(properties['container_name'], location=properties['s3_archive_region'])
+
         else:
             container_type = 'swift'
             swift_conn = swiftclient.client.Connection(auth_version='2',
