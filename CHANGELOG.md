@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed:
 - PNDA-4879: Added command to create sub directories in s3 or swift
 - PNDA-4897: S3 container create issue fixed at the time of data-archiving
+- PNDA-4921 Dataset management not picking up 'topic=' datasets
 
 ## [0.2.2] 2018-02-10
 ### Changed:
