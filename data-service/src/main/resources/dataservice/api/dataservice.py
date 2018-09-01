@@ -141,7 +141,7 @@ class GetPartitions(DataHandler):
     """
     Return partitions pertaining to a dataset
     """
-    __urls__ = [r'/api/' + API_VERSION + '/datasets/(?P<dataset_id>[a-zA-Z0-9_\\-]+)/partitions']
+    __urls__ = [r'/api/' + API_VERSION + '/datasets/(?P<dataset_id>[a-zA-Z0-9_\\-\\.]+)/partitions']
 
     @schema.validate(
         output_schema={
@@ -178,7 +178,7 @@ class UpdateDatasets(DataHandler):
     """
     Update/Retrieve  fields pertaining to specific api
     """
-    __urls__ = [r'/api/' + API_VERSION + '/datasets/(?P<dataset_id>[a-zA-Z0-9_\\-]+)/?$']
+    __urls__ = [r'/api/' + API_VERSION + '/datasets/(?P<dataset_id>[a-zA-Z0-9_\\-\\.]+)/?$']
 
     def __persist_dataset(self, dataset, retention):
         entry = copy.deepcopy(dataset)
