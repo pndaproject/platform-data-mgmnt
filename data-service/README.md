@@ -89,20 +89,20 @@ BODY
 
 on basis of size:
 	    
-	    {
-  			"policy":"size", 
-  			"max_size_gigabytes":10
+		{
+  	        	"policy":"size", 
+  	        	"max_size_gigabytes":10
 		}
 		
 on basis of age:
 
 		{ 
-          "policy":"age", 
-		  "max_age_days":30 
-        }
+                	"policy":"age", 
+			"max_age_days":30 
+		}
 
 Response:
-	 {
+	{
     	"status": "success",
     	"data": {
         "mode": "archive",
