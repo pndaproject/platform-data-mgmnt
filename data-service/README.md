@@ -15,9 +15,9 @@ This service helps operator to define data management policies for platform data
 
 ## Dataset location
 
-The cluster location for datset are specified in config file and service reads this location looking for `source=` identifier. Each entry containing `source` is tagged as a dataset and its governed by policy set by the operator.
+The cluster location for datset are specified in config file and service reads this location looking for `source=` and `topic=` identifiers. Each entry containing `source` or `topic` is tagged as a dataset and its governed by policy set by the operator.
 
-For example, in the case of PNDA, the default HDFS location for datasets is `/user/PNDA/datasets` and service will tag any subfolder on the basis of `source` tag as data entity
+For example, in the case of PNDA, the default HDFS location for datasets is `/user/PNDA/datasets` and service will tag any subfolder on the basis of `source` or `topic` tag as data entity
 
 > Bulk datasets are not yet integrated with dataservice.
 
