@@ -23,7 +23,7 @@ pyparsing==2.1.10
 python-keystoneclient==3.8.0
 python-swiftclient==3.2.0
 pytz==2016.10
-requests==2.12.4
+requests==2.20.0
 rfc3986==0.4.1
 simplejson==3.10.0
 six==1.10.0

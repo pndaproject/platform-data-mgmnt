@@ -8,7 +8,7 @@ happybase==1.0.0
 jsonschema==2.5.1
 ply==3.9
 PyHDFS==0.1.2
-requests==2.12.4
+requests==2.20.0
 simplejson==3.10.0
 singledispatch==3.4.0.3
 six==1.10.0
