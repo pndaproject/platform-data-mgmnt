@@ -74,6 +74,8 @@ class Platform(object):
             return Hortonworks()
         elif distribution == "Local":
             return Local()
+        elif distribution == "kubernetes":
+            return Kubernetes()
 
 
 def connect_cm(cm_host, cm_username, cm_password):
@@ -173,4 +175,13 @@ class Local(Platform):
     def discover(self, properties):
         endpoints = {"HDFS": Endpoint("HDFS", "192.168.33.10:50070"),
                      'HBASE': Endpoint("HBASE", "192.168.33.10")}
+        return endpoints
+
+class Kubernetes(Platform):
+    """
+    Endpoint definitions for Kubernetes
+    """
+    def discover(self, properties):
+        endpoints = {"HDFS": Endpoint("HDFS", "pnda-hdfs-namenode:50070"),
+                     'HBASE': Endpoint("HBASE", "pnda-hbase-master")}
         return endpoints
