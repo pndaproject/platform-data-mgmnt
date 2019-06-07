@@ -1,6 +1,6 @@
 NAME=data-service
-VERSION=0.1.1
-REGISTRY=containers.cisco.com/donaldh
+VERSION=release5.0
+REGISTRY=pnda
 
 build:	## Build the docker image
 	docker build -t "$(NAME):$(VERSION)" -f Dockerfile.$(NAME) .

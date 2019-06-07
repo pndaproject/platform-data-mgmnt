@@ -1,7 +1,6 @@
-FROM centos:7.6.1810
+FROM python:3.7.3-alpine3.9
 
-RUN yum install -y python python-devel epel-release
-RUN yum install -y python2-pip gcc
+RUN apk add --no-cache build-base
 
 COPY data-service/src/main/resources /data-service/
 

@@ -22,7 +22,7 @@ import re
 
 import happybase
 from pyhdfs import HdfsClient, HdfsException
-from thriftpy.transport import TException
+#from thriftpy.transport import TException
 
 from .dbenum import DATASET
 from .dbenum import DBSCHEMA
@@ -37,7 +37,7 @@ def onerror(msg):
     """
     Callback invoked by HDFS module when there are errors
     """
-    print " Error in HDFS Walk {}".format(msg)
+    print(" Error in HDFS Walk {}".format(msg))
 
 
 def tag_for_integrity(data_list):
@@ -93,7 +93,7 @@ class HDBDataStore(object):
             self.conn_pool = happybase.ConnectionPool(DB_CONNECTION_POOL_SIZE, host=hbase_host,
                                                       port=hbase_port_no,
                                                       timeout=DB_CONNECTION_TIME_OUT)
-        except TException as exception:
+        except Exception as exception:
             logging.warn("Exception throw for HBase Connection pool creation{%s}",
                          exception.message)
         self.hbase_host = hbase_host
@@ -181,7 +181,7 @@ class HDBDataStore(object):
                 table = connection.table(table_name)
                 for _, data in table.scan(limit=1):
                     logging.debug('%s found', table_name)
-        except TException as exception:
+        except Exception as exception:
             logging.warn(" failed to read table from hbase error(%s):", exception.message)
             return hbase_datasets
         logging.debug('connecting to hbase to read hbase_dataset')
@@ -237,7 +237,7 @@ class HDBDataStore(object):
                     dataset[DBSCHEMA.RETENTION] = data[DATASET.RETENTION]
                 logging.debug("calling put on table for %s", dataset)
                 table.put(data[DATASET.ID], dataset)
-        except TException as exception:
+        except Exception as exception:
             logging.warn("Failed to write dataset into hbase,  error(%s):", exception.message)
 
     def delete_dataset(self, data):
@@ -252,5 +252,5 @@ class HDBDataStore(object):
                 table = connection.table(table_name)
                 logging.debug("Deleting dataset from HBase:{%s}", data)
                 table.delete(data['id'])
-        except TException as exception:
+        except Exception as exception:
             logging.warn("Failed to delete dataset in hbase,  error(%s):", exception.message)
