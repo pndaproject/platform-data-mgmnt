@@ -174,26 +174,27 @@ class HDBDataStore(object):
         table_name = self.table_name
         try:
             with self.conn_pool.connection(DB_CONNECTION_TIME_OUT) as connection:
-                if table_name not in connection.tables():
+                if table_name.encode() not in connection.tables():
                     logging.info('creating hbase table %s', table_name)
                     connection.create_table(table_name, {'cf': dict()})
 
                 table = connection.table(table_name)
                 for _, data in table.scan(limit=1):
                     logging.debug('%s found', table_name)
+
+                logging.debug('connecting to hbase to read hbase_dataset')
+                for key, data in table.scan():
+                    item = {DATASET.ID: key, DATASET.PATH: data[DBSCHEMA.PATH],
+                            DATASET.POLICY: data[DBSCHEMA.POLICY],
+                            DATASET.MODE: data[DBSCHEMA.MODE]}
+                    if item[DATASET.POLICY] == POLICY.AGE:
+                        item[DATASET.MAX_AGE] = int(data[DBSCHEMA.RETENTION])
+                    elif item[DATASET.POLICY] == POLICY.SIZE:
+                        item[DATASET.MAX_SIZE] = int(data[DBSCHEMA.RETENTION])
+                    hbase_datasets.append(item)
         except Exception as exception:
-            logging.warn(" failed to read table from hbase error(%s):", exception.message)
-            return hbase_datasets
-        logging.debug('connecting to hbase to read hbase_dataset')
-        for key, data in table.scan():
-            item = {DATASET.ID: key, DATASET.PATH: data[DBSCHEMA.PATH],
-                    DATASET.POLICY: data[DBSCHEMA.POLICY],
-                    DATASET.MODE: data[DBSCHEMA.MODE]}
-            if item[DATASET.POLICY] == POLICY.AGE:
-                item[DATASET.MAX_AGE] = int(data[DBSCHEMA.RETENTION])
-            elif item[DATASET.POLICY] == POLICY.SIZE:
-                item[DATASET.MAX_SIZE] = int(data[DBSCHEMA.RETENTION])
-            hbase_datasets.append(item)
+            logging.warn("Failed to read table from hbase error(%s):", exception.message)
+
         logging.info(hbase_datasets)
         return hbase_datasets
 

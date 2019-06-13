@@ -135,6 +135,8 @@ class Kubernetes(Platform):
     Endpoint definitions for Kubernetes
     """
     def discover(self, properties):
-        endpoints = {"HDFS": Endpoint("HDFS", "pnda-hdfs-namenode:50070"),
-                     'HBASE': Endpoint("HBASE", "pnda-hbase-master")}
+        hdfs_namenode = properties['hdfs_namenode'] + ':50070'
+        hbase_master = properties['hbase_master']
+        endpoints = {"HDFS": Endpoint("HDFS", hdfs_namenode),
+                     'HBASE': Endpoint("HBASE", hbase_master)}
         return endpoints

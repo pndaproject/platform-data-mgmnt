@@ -6,6 +6,6 @@ PyHDFS==0.2.1
 requests==2.22.0
 simplejson==3.10.0
 singledispatch==3.4.0.3
-six==1.10.0
+six==1.12.0
 tornado==4.5.3
 Tornado-JSON==1.3.4
