@@ -133,7 +133,7 @@ class ListDatasets(DataHandler):
         except Return as return_value:
             raise return_value
         except Exception as exception:
-            logging.warn("Exception thrown in /list API %s", exception.message)
+            logging.warn("Exception thrown in /list API %s", str(exception))
             raise APIError(500, log_message="Server Internal error")
 
 
@@ -170,7 +170,7 @@ class GetPartitions(DataHandler):
         except Return as return_value:
             raise return_value
         except Exception as exception:
-            logging.warn("Exeception thrown in /parts API-> exception msg{%s}", exception.message)
+            logging.warn("Exeception thrown in /parts API-> exception msg{%s}", str(exception))
             raise APIError(500, log_message="Server Internal error")
 
 
@@ -243,7 +243,7 @@ class UpdateDatasets(DataHandler):
         except Return as return_value:
             raise return_value
         except Exception as exception:
-            logging.warn("Exception thrown in /id API %s", exception.message)
+            logging.warn("Exception thrown in /id API %s", str(exception))
             raise APIError(500, log_message="Server Internal error")
 
     @schema.validate(
@@ -276,10 +276,10 @@ class UpdateDatasets(DataHandler):
                     self.__persist_dataset(item, retention)
                     raise Return(item)
                 except jsonschema.ValidationError as ex:
-                    logging.error("Failed to validate input schema {msg:%s}", ex.message)
+                    logging.error("Failed to validate input schema {msg:%s}", str(ex))
                     raise APIError(400, log_message="Malformed request")
                 except jsonschema.SchemaError as ex:
-                    logging.error("Failed to validate input schema {msg:%s}", ex.message)
+                    logging.error("Failed to validate input schema {msg:%s}", str(ex))
                     raise APIError(400, log_message="Malformed request")
         except Return as return_exception:
             raise return_exception
@@ -287,5 +287,5 @@ class UpdateDatasets(DataHandler):
             raise api_error
         except Exception as exception:
             logging.warn('Dataset updated returned with following error '
-                         'on server->%s', exception.message)
+                         'on server->%s', str(exception))
             raise APIError(500, log_message="Internal Server Error")
