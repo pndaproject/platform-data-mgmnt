@@ -184,13 +184,13 @@ class HDBDataStore(object):
 
                 logging.debug('connecting to hbase to read hbase_dataset')
                 for key, data in table.scan():
-                    item = {DATASET.ID: key, DATASET.PATH: data[DBSCHEMA.PATH],
-                            DATASET.POLICY: data[DBSCHEMA.POLICY],
-                            DATASET.MODE: data[DBSCHEMA.MODE]}
+                    item = {DATASET.ID: key.decode(), DATASET.PATH: data[DBSCHEMA.PATH].decode(),
+                            DATASET.POLICY: data[DBSCHEMA.POLICY].decode(),
+                            DATASET.MODE: data[DBSCHEMA.MODE].decode()}
                     if item[DATASET.POLICY] == POLICY.AGE:
-                        item[DATASET.MAX_AGE] = int(data[DBSCHEMA.RETENTION])
+                        item[DATASET.MAX_AGE] = int(data[DBSCHEMA.RETENTION].decode())
                     elif item[DATASET.POLICY] == POLICY.SIZE:
-                        item[DATASET.MAX_SIZE] = int(data[DBSCHEMA.RETENTION])
+                        item[DATASET.MAX_SIZE] = int(data[DBSCHEMA.RETENTION].decode())
                     hbase_datasets.append(item)
         except Exception as exception:
             logging.warn("Failed to read table from hbase error(%s):", exception.message)
