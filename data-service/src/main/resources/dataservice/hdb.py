@@ -95,7 +95,7 @@ class HDBDataStore(object):
                                                       timeout=DB_CONNECTION_TIME_OUT)
         except Exception as exception:
             logging.warn("Exception throw for HBase Connection pool creation{%s}",
-                         exception.message)
+                         str(exception))
         self.hbase_host = hbase_host
         self.hdfs_host = hdfs_host
         self.hbase_port_no = hbase_port_no
@@ -162,7 +162,7 @@ class HDBDataStore(object):
                         hdfs_dataset.append(item)
                 break
         except HdfsException as exception:
-            logging.warn("Error in walking HDFS File system %s", exception.message)
+            logging.warn("Error in walking HDFS File system %s", str(exception))
         return hdfs_dataset
 
     def retrieve_datasets_from_hbase(self):
@@ -193,7 +193,7 @@ class HDBDataStore(object):
                         item[DATASET.MAX_SIZE] = int(data[DBSCHEMA.RETENTION].decode())
                     hbase_datasets.append(item)
         except Exception as exception:
-            logging.warn("Failed to read table from hbase error(%s):", exception.message)
+            logging.warn("Failed to read table from hbase error(%s):", str(exception))
 
         logging.info(hbase_datasets)
         return hbase_datasets
@@ -218,7 +218,7 @@ class HDBDataStore(object):
                     data_parts.append(entry)
         except HdfsException as exception:
             logging.warn(
-                "Error in walking HDFS File system for partitions errormsg:%s", exception.message)
+                "Error in walking HDFS File system for partitions errormsg:%s", str(exception))
         return data_parts
 
     def write_dataset(self, data):
@@ -239,7 +239,7 @@ class HDBDataStore(object):
                 logging.debug("calling put on table for %s", dataset)
                 table.put(data[DATASET.ID], dataset)
         except Exception as exception:
-            logging.warn("Failed to write dataset into hbase,  error(%s):", exception.message)
+            logging.warn("Failed to write dataset into hbase,  error(%s):", str(exception))
 
     def delete_dataset(self, data):
         """
@@ -254,4 +254,4 @@ class HDBDataStore(object):
                 logging.debug("Deleting dataset from HBase:{%s}", data)
                 table.delete(data['id'])
         except Exception as exception:
-            logging.warn("Failed to delete dataset in hbase,  error(%s):", exception.message)
+            logging.warn("Failed to delete dataset in hbase,  error(%s):", str(exception))
