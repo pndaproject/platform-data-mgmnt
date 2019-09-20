@@ -49,11 +49,11 @@ class DATASET(EnumDict):
 
 class DBSCHEMA(EnumDict):
     """ HBase schema constants """
-    ID = 'id' # pylint: disable=invalid-name
-    PATH = 'cf:path'
-    POLICY = 'cf:policy'
-    RETENTION = 'cf:retention'
-    MODE = 'cf:mode'
+    ID = b'id' # pylint: disable=invalid-name
+    PATH = b'cf:path'
+    POLICY = b'cf:policy'
+    RETENTION = b'cf:retention'
+    MODE = b'cf:mode'
 
 
 class POLICY(EnumDict):
