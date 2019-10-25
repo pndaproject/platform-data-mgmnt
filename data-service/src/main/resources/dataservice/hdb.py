@@ -161,6 +161,13 @@ class HDBDataStore(object):
                                 DATASET.PATH: os.path.join(root, entry), DATASET.MODE: 'keep'}
                         hdfs_dataset.append(item)
                 break
+            for root, dirs, _ in self.client.walk(repo_path + '/topics', topdown=True, onerror=onerror):
+                for entry in dirs:
+                    item = {DATASET.ID: entry,
+                                DATASET.POLICY: POLICY.SIZE,
+                                DATASET.PATH: os.path.join(root, entry), DATASET.MODE: 'keep'}
+                    hdfs_dataset.append(item)
+                break
         except HdfsException as exception:
             logging.warn("Error in walking HDFS File system %s", str(exception))
         return hdfs_dataset
