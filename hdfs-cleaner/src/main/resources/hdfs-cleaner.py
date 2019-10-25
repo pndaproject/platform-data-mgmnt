@@ -67,10 +67,10 @@ def archive(container_path, hdfs, file_path):
         subprocess.check_output(['hdfs', 'dfs', '-cp', file_path, archive_path])
         delete(hdfs, file_path)
     except subprocess.CalledProcessError as cpe:
-        logging.error('CPE:failed to archive {%s} with following error{%s}', file_path, cpe.message)
+        logging.error('CPE:failed to archive {%s} with following error{%s}', file_path, str(cpe))
     except ValueError as value_error:
         logging.error('VE:failed to archive {%s} with following error{%s}', file_path,
-                      value_error.message)
+                      str(value_error))
 
 
 def check_threshold():
@@ -135,7 +135,7 @@ def error(exception):
     :param exception: Exception object
     :return:
     """
-    logging.warn("Error in HDFS API Invocation error msg->{%s}", exception.message)
+    logging.warn("Error in HDFS API Invocation error msg->{%s}", str(exception))
 
 
 def clean_empty_dirs(hdfs, root, dirs):
@@ -208,10 +208,10 @@ def cleanup_on_size(hdfs, cmd, clean_path, size_threshold):
 
                     clean_empty_dirs(hdfs, root, dirs)
         except HdfsFileNotFoundException as hdfs_file_not_found_exception:
-            logging.warn("{%s}", hdfs_file_not_found_exception.message)
+            logging.warn("{%s}", hdfs_file_not_found_str(exception))
         except Exception as exception:
             logging.warn("Exception in clean directories possibly dir doesnt exist{%s}",
-                         exception.message)
+                         str(exception))
 
 def cleanup_spark(spark_path):
     """
@@ -288,7 +288,7 @@ def read_datasets_from_hbase(table_name, hbase_host):
                 logging.error("Invalid dataset entry in HBase")
 
     except Exception as exception:
-        logging.warn("Exception thrown for datasets walk on HBASE->'{%s}'", exception.message)
+        logging.warn("Exception thrown for datasets walk on HBASE->'{%s}'", str(exception))
     return datasets
 
 

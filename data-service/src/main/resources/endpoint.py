@@ -15,8 +15,6 @@
 """
 import requests
 
-from cm_api.api_client import ApiResource
-
 CLOUDERA = "CDH"
 HORTONWORKS = "HDP"
 
@@ -69,56 +67,13 @@ class Platform(object):
         :return: Platform object
         """
         if distribution == ("%s" % CLOUDERA):
-            return Cloudera()
+            raise Error("Cloudera is not supported")
         elif distribution == ("%s" % HORTONWORKS):
             return Hortonworks()
         elif distribution == "Local":
             return Local()
-
-
-def connect_cm(cm_host, cm_username, cm_password):
-    """
-    Connects to Cloudera Manager API Resource instance to retrieve Endpoint details
-    :param cm_host: Cloudera Manager host
-    :param cm_username: Username for authentication
-    :param cm_password: Password for authentication
-    :return:
-    """
-    api = ApiResource(cm_host, version=6, username=cm_username, password=cm_password)
-    cm_manager = api.get_cloudera_manager()
-    return api, cm_manager
-
-
-class Cloudera(Platform):
-    """
-    Cloudera Endpoint object that discovers endpoint of an
-    hadoop cluster depending on the distribution
-    """
-
-    def discover(self, properties):
-        endpoints = {}
-        api, _ = connect_cm(properties['cm_host'], properties['cm_user'], properties['cm_pass'])
-        cluster_name = ""
-        for cluster_detail in api.get_all_clusters():
-            cluster_name = cluster_detail.name
-            break
-        print 'getting ' + cluster_name
-        cluster = api.get_cluster(cluster_name)
-        for service in cluster.get_all_services():
-            if service.type == "HDFS":
-                for role in service.get_all_roles():
-                    if role.type == "HTTPFS":
-                        webhdfs_host = '%s:14000' % api.get_host(role.hostRef.hostId).hostname
-                        endpoints['HDFS'] = Endpoint("HDFS", webhdfs_host)
-                        break
-            elif service.type == "HBASE":
-                for role in service.get_all_roles():
-                    if role.type == "HBASETHRIFTSERVER":
-                        hbase_host = '%s' % api.get_host(role.hostRef.hostId).hostname
-                        endpoints['HBASE'] = Endpoint("HBASE", hbase_host)
-                        break
-        return endpoints
-
+        elif distribution == "kubernetes":
+            return Kubernetes()
 
 class Hortonworks(Platform):
     """
@@ -173,4 +128,15 @@ class Local(Platform):
     def discover(self, properties):
         endpoints = {"HDFS": Endpoint("HDFS", "192.168.33.10:50070"),
                      'HBASE': Endpoint("HBASE", "192.168.33.10")}
+        return endpoints
+
+class Kubernetes(Platform):
+    """
+    Endpoint definitions for Kubernetes
+    """
+    def discover(self, properties):
+        hdfs_namenode = properties['hdfs_namenode'] + ':50070'
+        hbase_master = properties['hbase_master']
+        endpoints = {"HDFS": Endpoint("HDFS", hdfs_namenode),
+                     'HBASE': Endpoint("HBASE", hbase_master)}
         return endpoints
