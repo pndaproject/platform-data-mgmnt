@@ -22,7 +22,7 @@ import re
 
 import happybase
 from pyhdfs import HdfsClient, HdfsException
-from thriftpy.transport import TException
+#from thriftpy.transport import TException
 
 from .dbenum import DATASET
 from .dbenum import DBSCHEMA
@@ -37,7 +37,7 @@ def onerror(msg):
     """
     Callback invoked by HDFS module when there are errors
     """
-    print " Error in HDFS Walk {}".format(msg)
+    print(" Error in HDFS Walk {}".format(msg))
 
 
 def tag_for_integrity(data_list):
@@ -93,9 +93,9 @@ class HDBDataStore(object):
             self.conn_pool = happybase.ConnectionPool(DB_CONNECTION_POOL_SIZE, host=hbase_host,
                                                       port=hbase_port_no,
                                                       timeout=DB_CONNECTION_TIME_OUT)
-        except TException as exception:
+        except Exception as exception:
             logging.warn("Exception throw for HBase Connection pool creation{%s}",
-                         exception.message)
+                         str(exception))
         self.hbase_host = hbase_host
         self.hdfs_host = hdfs_host
         self.hbase_port_no = hbase_port_no
@@ -141,20 +141,35 @@ class HDBDataStore(object):
         try:
             for root, dirs, _ in self.client.walk(repo_path, topdown=True, onerror=onerror):
                 for entry in dirs:
-                    m_source = re.match('^source=(?P<source>.*)', entry)
+                    if 'source=' in entry:
+                        m_source = re.match('^source=(?P<source>.*)', entry)
+                        m_group = 'source'
+                    elif 'topic=' in entry:
+                        m_source = re.match('^topic=(?P<topic>.*)', entry)
+                        m_group = 'topic'
+                    else:
+                        continue
+
                     if m_source is None:
                         continue
-                    elif m_source.group('source') == '':
+                    elif m_source.group(m_group) == '':
                         logging.warn('An empty source is present, this is not allowed. Something was wrong during ingestion')
                         continue
                     else:
-                        item = {DATASET.ID: m_source.group('source'),
+                        item = {DATASET.ID: m_source.group(m_group),
                                 DATASET.POLICY: POLICY.SIZE,
                                 DATASET.PATH: os.path.join(root, entry), DATASET.MODE: 'keep'}
                         hdfs_dataset.append(item)
                 break
+            for root, dirs, _ in self.client.walk(repo_path + '/topics', topdown=True, onerror=onerror):
+                for entry in dirs:
+                    item = {DATASET.ID: entry,
+                                DATASET.POLICY: POLICY.SIZE,
+                                DATASET.PATH: os.path.join(root, entry), DATASET.MODE: 'keep'}
+                    hdfs_dataset.append(item)
+                break
         except HdfsException as exception:
-            logging.warn("Error in walking HDFS File system %s", exception.message)
+            logging.warn("Error in walking HDFS File system %s", str(exception))
         return hdfs_dataset
 
     def retrieve_datasets_from_hbase(self):
@@ -166,26 +181,27 @@ class HDBDataStore(object):
         table_name = self.table_name
         try:
             with self.conn_pool.connection(DB_CONNECTION_TIME_OUT) as connection:
-                if table_name not in connection.tables():
+                if table_name.encode() not in connection.tables():
                     logging.info('creating hbase table %s', table_name)
                     connection.create_table(table_name, {'cf': dict()})
 
                 table = connection.table(table_name)
                 for _, data in table.scan(limit=1):
                     logging.debug('%s found', table_name)
-        except TException as exception:
-            logging.warn(" failed to read table from hbase error(%s):", exception.message)
-            return hbase_datasets
-        logging.debug('connecting to hbase to read hbase_dataset')
-        for key, data in table.scan():
-            item = {DATASET.ID: key, DATASET.PATH: data[DBSCHEMA.PATH],
-                    DATASET.POLICY: data[DBSCHEMA.POLICY],
-                    DATASET.MODE: data[DBSCHEMA.MODE]}
-            if item[DATASET.POLICY] == POLICY.AGE:
-                item[DATASET.MAX_AGE] = int(data[DBSCHEMA.RETENTION])
-            elif item[DATASET.POLICY] == POLICY.SIZE:
-                item[DATASET.MAX_SIZE] = int(data[DBSCHEMA.RETENTION])
-            hbase_datasets.append(item)
+
+                logging.debug('connecting to hbase to read hbase_dataset')
+                for key, data in table.scan():
+                    item = {DATASET.ID: key.decode(), DATASET.PATH: data[DBSCHEMA.PATH].decode(),
+                            DATASET.POLICY: data[DBSCHEMA.POLICY].decode(),
+                            DATASET.MODE: data[DBSCHEMA.MODE].decode()}
+                    if item[DATASET.POLICY] == POLICY.AGE:
+                        item[DATASET.MAX_AGE] = int(data[DBSCHEMA.RETENTION].decode())
+                    elif item[DATASET.POLICY] == POLICY.SIZE:
+                        item[DATASET.MAX_SIZE] = int(data[DBSCHEMA.RETENTION].decode())
+                    hbase_datasets.append(item)
+        except Exception as exception:
+            logging.warn("Failed to read table from hbase error(%s):", str(exception))
+
         logging.info(hbase_datasets)
         return hbase_datasets
 
@@ -209,7 +225,7 @@ class HDBDataStore(object):
                     data_parts.append(entry)
         except HdfsException as exception:
             logging.warn(
-                "Error in walking HDFS File system for partitions errormsg:%s", exception.message)
+                "Error in walking HDFS File system for partitions errormsg:%s", str(exception))
         return data_parts
 
     def write_dataset(self, data):
@@ -229,8 +245,8 @@ class HDBDataStore(object):
                     dataset[DBSCHEMA.RETENTION] = data[DATASET.RETENTION]
                 logging.debug("calling put on table for %s", dataset)
                 table.put(data[DATASET.ID], dataset)
-        except TException as exception:
-            logging.warn("Failed to write dataset into hbase,  error(%s):", exception.message)
+        except Exception as exception:
+            logging.warn("Failed to write dataset into hbase,  error(%s):", str(exception))
 
     def delete_dataset(self, data):
         """
@@ -244,5 +260,5 @@ class HDBDataStore(object):
                 table = connection.table(table_name)
                 logging.debug("Deleting dataset from HBase:{%s}", data)
                 table.delete(data['id'])
-        except TException as exception:
-            logging.warn("Failed to delete dataset in hbase,  error(%s):", exception.message)
+        except Exception as exception:
+            logging.warn("Failed to delete dataset in hbase,  error(%s):", str(exception))

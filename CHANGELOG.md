@@ -3,6 +3,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.3.0] 2018-08-28
+### Added:
+- PNDA-4426: Added a config to control the log level for the dataset service
+### Fixed:
+- PNDA-4879: Added command to create sub directories in s3 or swift
+- PNDA-4897: S3 container create issue fixed at the time of data-archiving
+- PNDA-4921 Dataset management not picking up 'topic=' datasets
+
+## [0.2.2] 2018-02-10
+### Changed:
+- PNDA-3601: Disable emailtext in Jenkins file and replace it with notifier stage and job
+
 ## [0.2.1] 2017-11-24
 ### Added:
 - PNDA-2445: Support for Hortonworks HDP

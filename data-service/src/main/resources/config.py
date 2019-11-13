@@ -42,3 +42,6 @@ def define_options():
     define("cm_host", default='localhost', help="The cluster manager interface", type=str)
     define("cm_user", default='admin', help="The user name for cluster manager", type=str)
     define("cm_pass", default='admin', help="The password for cluster manager", type=str)
+    define("log_level", default='INFO', help="The log level setting for logging", type=str)
+    define("hdfs_namenode", default='localhost', help="The dns name of the HDFS name node", type=str)
+    define("hbase_master", default='localhost', help="The dns name of the HBase master node", type=str)
