@@ -1,0 +1,28 @@
+FROM python:3.7-alpine3.9 as wheels-builder
+
+RUN apk add --no-cache build-base linux-headers
+RUN pip3 install --upgrade pip
+RUN pip3 wheel cm-api==14.0.0 happybase==1.2.0 netifaces==0.10.9 thriftpy2==0.4.8
+
+FROM python:3.7-alpine3.9
+
+#RUN apk add --no-cache build-base
+
+COPY hdfs-cleaner/src/main/resources /hdfs-cleaner/
+
+COPY --from=wheels-builder \
+    /cm_api-14.0.0-py3-none-any.whl \
+    /happybase-1.2.0-py2.py3-none-any.whl \
+    /netifaces-0.10.9-cp37-cp37m-linux_x86_64.whl \
+    /thriftpy2-0.4.8-cp37-cp37m-linux_x86_64.whl \
+    /
+
+WORKDIR /hdfs-cleaner
+
+RUN pip install /cm_api-14.0.0-py3-none-any.whl \
+                /happybase-1.2.0-py2.py3-none-any.whl \
+                /netifaces-0.10.9-cp37-cp37m-linux_x86_64.whl \
+                /thriftpy2-0.4.8-cp37-cp37m-linux_x86_64.whl && \
+    pip install -r requirements.txt
+
+#
