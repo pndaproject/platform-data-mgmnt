@@ -3,6 +3,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.4.1] 2019-11-13
+### Fixed:
+- Multiple vulnerabilities in dependencies
+
+## [0.4.0] 2019-11-12
+### Added:
+- Docker container support.
+
 ## [0.3.0] 2018-08-28
 ### Added:
 - PNDA-4426: Added a config to control the log level for the dataset service
