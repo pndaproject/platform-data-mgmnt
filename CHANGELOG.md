@@ -3,6 +3,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.4.2] 2019-11-13
+### Added:
+- Docker container support for hdfs-cleaner
+### Fixed:
+- Remove build-dependencies from docker images
+
 ## [0.4.1] 2019-11-13
 ### Fixed:
 - Multiple vulnerabilities in dependencies
