@@ -270,7 +270,7 @@ def read_datasets_from_hbase(table_name, hbase_host):
     try:
         connection = happybase.Connection(hbase_host)
         connection.open()
-        table = connection.table(table_name, )
+        table = connection.table(table_name)
         logging.info('connecting to hbase to read data sets')
         for key, data in table.scan():
             logging.debug("Looking for next data in HBase")
