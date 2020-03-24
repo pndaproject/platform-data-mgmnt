@@ -26,10 +26,10 @@ import traceback
 from functools import partial
 from functools import wraps
 
+import boto.s3
 import happybase
 import swiftclient
 from pyhdfs import HdfsClient, HdfsFileNotFoundException
-import boto.s3
 
 from endpoint import Platform
 

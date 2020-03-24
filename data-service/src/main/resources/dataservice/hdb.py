@@ -46,7 +46,7 @@ def tag_for_integrity(data_list):
     :param data_list:
     :return:
     """
-    if len(data_list) > 0:
+    if data_list:
         for i in data_list:
             i['policy'] = DATASET.INTEGRITY_ERROR
     return data_list
@@ -121,10 +121,10 @@ class HDBDataStore(object):
                 hdfs_list.remove(hdfs_entry)
                 hbase_list.remove(hbase_entry)
         # yes intersection
-        if len(inter_list) > 0:
+        if inter_list:
             logging.debug("The intersection list:%s is", inter_list)
             self.master_dataset = inter_list + hdfs_list
-            if len(hbase_list) != 0:
+            if hbase_list:
                 logging.warn(" Warning Untracked datasets of size %d", len(hbase_list))
                 self.master_dataset = self.master_dataset + tag_for_integrity(hbase_list)
         else:
