@@ -13,7 +13,7 @@ netifaces==0.10.9
 oslo.config==3.21.0
 oslo.i18n==3.11.0
 oslo.serialization==2.15.0
-oslo.utils==3.21.0
+oslo.utils==4.10.1
 pbr==1.10.0
 ply==3.9
 positional==1.1.1
