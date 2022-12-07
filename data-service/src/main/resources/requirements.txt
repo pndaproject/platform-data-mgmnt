@@ -1,4 +1,4 @@
-certifi==2017.4.17
+certifi==2022.12.7
 thriftpy2==0.4.8
 happybase==1.2.0
 jsonschema==2.5.1
